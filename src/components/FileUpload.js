@@ -1,17 +1,11 @@
 import React, { useCallback, useState, useRef } from 'react';
 import { Upload, File, X, AlertCircle } from 'lucide-react';
-import { FileData } from '../types';
 
-interface FileUploadProps {
-  onFilesUpload: (files: FileData[]) => void;
-  isAnalyzing: boolean;
-}
-
-const FileUpload: React.FC<FileUploadProps> = ({ onFilesUpload, isAnalyzing }) => {
-  const [files, setFiles] = useState<FileData[]>([]);
+const FileUpload = ({ onFilesUpload, isAnalyzing }) => {
+  const [files, setFiles] = useState([]);
   const [dragActive, setDragActive] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [error, setError] = useState(null);
+  const fileInputRef = useRef(null);
 
   const acceptedTypes = {
     'text/plain': ['.txt'],
@@ -20,7 +14,7 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFilesUpload, isAnalyzing }) =
     'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx']
   };
 
-  const validateFile = (file: File): string | null => {
+  const validateFile = (file) => {
     const extension = '.' + file.name.split('.').pop()?.toLowerCase();
     const validExtensions = Object.values(acceptedTypes).flat();
     
@@ -28,18 +22,18 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFilesUpload, isAnalyzing }) =
       return `Invalid file type. Accepted: ${validExtensions.join(', ')}`;
     }
     
-    if (file.size > 10 * 1024 * 1024) { // 10MB limit
+    if (file.size > 10 * 1024 * 1024) {
       return 'File size must be less than 10MB';
     }
     
     return null;
   };
 
-  const processFile = (file: File): Promise<FileData> => {
+  const processFile = (file) => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
       reader.onload = (e) => {
-        const content = e.target?.result as string;
+        const content = e.target?.result;
         resolve({
           id: Math.random().toString(36).substr(2, 9),
           name: file.name,
@@ -54,10 +48,10 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFilesUpload, isAnalyzing }) =
     });
   };
 
-  const handleFiles = useCallback(async (fileList: FileList) => {
+  const handleFiles = useCallback(async (fileList) => {
     setError(null);
-    const newFiles: FileData[] = [];
-    const errors: string[] = [];
+    const newFiles = [];
+    const errors = [];
 
     for (let i = 0; i < fileList.length; i++) {
       const file = fileList[i];
@@ -87,7 +81,7 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFilesUpload, isAnalyzing }) =
     }
   }, [files, onFilesUpload]);
 
-  const handleDrop = useCallback((e: React.DragEvent) => {
+  const handleDrop = useCallback((e) => {
     e.preventDefault();
     setDragActive(false);
     
@@ -99,59 +93,51 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFilesUpload, isAnalyzing }) =
     }
   }, [handleFiles, isAnalyzing]);
 
-  const handleFileInput = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileInput = useCallback((e) => {
     if (e.target.files && e.target.files.length > 0) {
       handleFiles(e.target.files);
     }
   }, [handleFiles]);
 
-  const removeFile = useCallback((fileId: string) => {
+  const removeFile = useCallback((fileId) => {
     const updatedFiles = files.filter(f => f.id !== fileId);
     setFiles(updatedFiles);
     onFilesUpload(updatedFiles);
-    setError(null); // Clear any existing errors when removing files
+    setError(null);
   }, [files, onFilesUpload]);
 
   const clearAllFiles = useCallback(() => {
-    // Clear all state
     setFiles([]);
     setError(null);
     setDragActive(false);
     
-    // Reset file input completely
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
       fileInputRef.current.files = null;
     }
     
-    // Clear all file inputs on the page
-    const fileInputs = document.querySelectorAll('input[type="file"]') as NodeListOf<HTMLInputElement>;
+    const fileInputs = document.querySelectorAll('input[type="file"]');
     fileInputs.forEach(input => {
       input.value = '';
       input.files = null;
     });
     
-    // Notify parent component
     onFilesUpload([]);
     
-    // Force re-render by updating a dummy state
     setTimeout(() => {
       setDragActive(false);
     }, 0);
   }, [onFilesUpload]);
 
-  // Expose clearAllFiles function to parent component
   React.useImperativeHandle(React.forwardRef(() => null), () => ({
     clearAllFiles
   }));
 
-  // Handle clear files from parent
   React.useEffect(() => {
     const handleClearFiles = () => {
       clearAllFiles();
     };
 
-    // Listen for custom clear event
     window.addEventListener('clearFiles', handleClearFiles);
     
     return () => {
@@ -161,7 +147,6 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFilesUpload, isAnalyzing }) =
 
   return (
     <div className="space-y-6">
-      {/* Upload Area */}
       <div
         onDragEnter={(e) => {
           e.preventDefault();
@@ -210,7 +195,6 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFilesUpload, isAnalyzing }) =
         </div>
       </div>
 
-      {/* Error Display */}
       {error && (
         <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-start space-x-3">
           <AlertCircle className="w-5 h-5 text-red-500 mt-0.5 flex-shrink-0" />
@@ -221,7 +205,6 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFilesUpload, isAnalyzing }) =
         </div>
       )}
 
-      {/* File List */}
       {files.length > 0 && (
         <div className="space-y-3">
           <h3 className="text-lg font-medium text-slate-900">

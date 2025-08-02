@@ -1,16 +1,11 @@
 import React, { useState } from 'react';
 import { AlertTriangle, CheckCircle, Download, BarChart3 } from 'lucide-react';
-import { ComparisonResult } from '../types';
-import SimilarityMeter from './SimilarityMeter';
+import SimilarityMeter from './SimilarityMeter.js';
 
-interface ComparisonResultsProps {
-  results: ComparisonResult[];
-}
+const ComparisonResults = ({ results }) => {
+  const [sortBy, setSortBy] = useState('similarity');
 
-const ComparisonResults: React.FC<ComparisonResultsProps> = ({ results }) => {
-  const [sortBy, setSortBy] = useState<'similarity' | 'name'>('similarity');
-
-  const getSimilarityLevel = (similarity: number) => {
+  const getSimilarityLevel = (similarity) => {
     if (similarity >= 70) return { level: 'high', color: 'red', label: 'High Risk' };
     if (similarity >= 40) return { level: 'medium', color: 'yellow', label: 'Moderate Risk' };
     return { level: 'low', color: 'green', label: 'Low Risk' };
@@ -50,7 +45,6 @@ const ComparisonResults: React.FC<ComparisonResultsProps> = ({ results }) => {
 
   return (
     <div className="space-y-6">
-      {/* Results Header */}
       <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-6">
         <div className="flex items-center justify-between mb-6">
           <div>
@@ -63,7 +57,7 @@ const ComparisonResults: React.FC<ComparisonResultsProps> = ({ results }) => {
           <div className="flex items-center space-x-3">
             <select
               value={sortBy}
-              onChange={(e) => setSortBy(e.target.value as 'similarity' | 'name')}
+              onChange={(e) => setSortBy(e.target.value)}
               className="px-3 py-2 border border-slate-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="similarity">Sort by Similarity</option>
@@ -80,7 +74,6 @@ const ComparisonResults: React.FC<ComparisonResultsProps> = ({ results }) => {
           </div>
         </div>
 
-        {/* Summary Stats */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div className="bg-slate-50 rounded-lg p-4">
             <div className="flex items-center space-x-2">
@@ -124,7 +117,6 @@ const ComparisonResults: React.FC<ComparisonResultsProps> = ({ results }) => {
         </div>
       </div>
 
-      {/* Results List */}
       <div className="space-y-4">
         {sortedResults.map((result) => {
           const { level, color, label } = getSimilarityLevel(result.similarity);

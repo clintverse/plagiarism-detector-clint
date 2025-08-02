@@ -1,15 +1,9 @@
-interface TfIdfVector {
-  [term: string]: number;
-}
-
-export function calculateTfIdf(documents: string[]): TfIdfVector[] {
+export function calculateTfIdf(documents) {
   const tokenizedDocs = documents.map(doc => tokenize(doc));
   const vocabulary = buildVocabulary(tokenizedDocs);
   
-  // Handle edge case where documents are identical or very similar
   if (documents.length === 2 && documents[0].trim() === documents[1].trim()) {
-    // Return identical vectors for identical documents
-    const identicalVector: TfIdfVector = {};
+    const identicalVector = {};
     vocabulary.forEach(term => {
       identicalVector[term] = 1.0;
     });
@@ -18,7 +12,7 @@ export function calculateTfIdf(documents: string[]): TfIdfVector[] {
   
   return tokenizedDocs.map(tokens => {
     const tfVector = calculateTf(tokens, vocabulary);
-    const tfidfVector: TfIdfVector = {};
+    const tfidfVector = {};
     
     Object.keys(tfVector).forEach(term => {
       const idf = calculateIdf(term, tokenizedDocs);
@@ -29,10 +23,9 @@ export function calculateTfIdf(documents: string[]): TfIdfVector[] {
   });
 }
 
-export function cosineSimilarity(vector1: TfIdfVector, vector2: TfIdfVector): number {
+export function cosineSimilarity(vector1, vector2) {
   const terms = new Set([...Object.keys(vector1), ...Object.keys(vector2)]);
   
-  // Handle identical vectors
   if (terms.size === 0) return 1.0;
   
   let dotProduct = 0;
@@ -50,18 +43,15 @@ export function cosineSimilarity(vector1: TfIdfVector, vector2: TfIdfVector): nu
   
   const magnitude = Math.sqrt(magnitude1) * Math.sqrt(magnitude2);
   
-  // Handle edge cases
   if (magnitude === 0) {
-    // If both vectors are zero, they are identical
     return magnitude1 === 0 && magnitude2 === 0 ? 1.0 : 0;
   }
   
   const similarity = dotProduct / magnitude;
-  return Math.min(1.0, Math.max(0, similarity)); // Clamp between 0 and 1
+  return Math.min(1.0, Math.max(0, similarity));
 }
 
-// Line-by-line similarity calculation for better accuracy
-export function calculateLineSimilarity(text1: string, text2: string): number {
+export function calculateLineSimilarity(text1, text2) {
   const lines1 = text1.split('\n').map(line => line.trim()).filter(line => line.length > 0);
   const lines2 = text2.split('\n').map(line => line.trim()).filter(line => line.length > 0);
   
@@ -71,27 +61,23 @@ export function calculateLineSimilarity(text1: string, text2: string): number {
   let matchingLines = 0;
   const totalLines = Math.max(lines1.length, lines2.length);
   
-  // Check each line in text1 against all lines in text2
   lines1.forEach(line1 => {
     const bestMatch = lines2.reduce((maxSim, line2) => {
       const similarity = calculateStringSimilarity(line1, line2);
       return Math.max(maxSim, similarity);
     }, 0);
     
-    // Consider it a match if similarity is above 0.8
     if (bestMatch > 0.8) {
       matchingLines++;
     }
   });
   
-  // Also check lines2 against lines1 to catch any missed matches
   lines2.forEach(line2 => {
     const bestMatch = lines1.reduce((maxSim, line1) => {
       const similarity = calculateStringSimilarity(line1, line2);
       return Math.max(maxSim, similarity);
     }, 0);
     
-    // Only count if we haven't already counted this as a match
     if (bestMatch > 0.8) {
       const alreadyCounted = lines1.some(line1 => 
         calculateStringSimilarity(line1, line2) > 0.8
@@ -102,31 +88,25 @@ export function calculateLineSimilarity(text1: string, text2: string): number {
     }
   });
   
-  // Calculate similarity as ratio of matching lines to total lines
   const similarity = matchingLines / totalLines;
   return Math.min(1.0, similarity);
 }
 
-// Enhanced string similarity calculation
-function calculateStringSimilarity(str1: string, str2: string): number {
-  // Handle identical strings
+function calculateStringSimilarity(str1, str2) {
   if (str1 === str2) return 1.0;
   
-  // Normalize strings
   const norm1 = str1.toLowerCase().replace(/[^\w\s'-]/g, ' ').replace(/\s+/g, ' ').trim();
   const norm2 = str2.toLowerCase().replace(/[^\w\s'-]/g, ' ').replace(/\s+/g, ' ').trim();
   
   if (norm1 === norm2) return 1.0;
   if (norm1.length === 0 || norm2.length === 0) return 0;
 
-  // Use Levenshtein distance for character-level similarity
   const longer = norm1.length > norm2.length ? norm1 : norm2;
   const shorter = norm1.length > norm2.length ? norm2 : norm1;
   
   const editDistance = levenshteinDistance(longer, shorter);
   const charSimilarity = (longer.length - editDistance) / longer.length;
   
-  // Enhanced word-based similarity
   const words1 = norm1.split(/\s+/).filter(w => w.length > 0);
   const words2 = norm2.split(/\s+/).filter(w => w.length > 0);
   
@@ -137,15 +117,13 @@ function calculateStringSimilarity(str1: string, str2: string): number {
   const totalWords = Math.max(words1.length, words2.length);
   const wordSimilarity = commonWords / totalWords;
   
-  // Combine character and word similarities with higher weight on word similarity
   const finalSimilarity = (charSimilarity * 0.3) + (wordSimilarity * 0.7);
   
   return Math.min(1.0, Math.max(0, finalSimilarity));
 }
 
-// Levenshtein distance calculation
-function levenshteinDistance(str1: string, str2: string): number {
-  const matrix: number[][] = [];
+function levenshteinDistance(str1, str2) {
+  const matrix = [];
 
   for (let i = 0; i <= str2.length; i++) {
     matrix[i] = [i];
@@ -161,9 +139,9 @@ function levenshteinDistance(str1: string, str2: string): number {
         matrix[i][j] = matrix[i - 1][j - 1];
       } else {
         matrix[i][j] = Math.min(
-          matrix[i - 1][j - 1] + 1, // substitution
-          matrix[i][j - 1] + 1,     // insertion
-          matrix[i - 1][j] + 1      // deletion
+          matrix[i - 1][j - 1] + 1,
+          matrix[i][j - 1] + 1,
+          matrix[i - 1][j] + 1
         );
       }
     }
@@ -172,29 +150,28 @@ function levenshteinDistance(str1: string, str2: string): number {
   return matrix[str2.length][str1.length];
 }
 
-// Enhanced tokenization with better preprocessing
-function tokenize(text: string): string[] {
+function tokenize(text) {
   const tokens = text
     .toLowerCase()
-    .replace(/[^\w\s'-]/g, ' ') // Keep apostrophes and hyphens
-    .replace(/\s+/g, ' ') // Normalize whitespace
+    .replace(/[^\w\s'-]/g, ' ')
+    .replace(/\s+/g, ' ')
     .trim()
     .split(' ')
-    .filter(token => token.length > 1 && !isStopWord(token)); // Reduced minimum length
+    .filter(token => token.length > 1 && !isStopWord(token));
   
   return tokens;
 }
 
-function buildVocabulary(tokenizedDocs: string[][]): string[] {
-  const termSet = new Set<string>();
+function buildVocabulary(tokenizedDocs) {
+  const termSet = new Set();
   tokenizedDocs.forEach(tokens => {
     tokens.forEach(token => termSet.add(token));
   });
   return Array.from(termSet);
 }
 
-function calculateTf(tokens: string[], vocabulary: string[]): { [term: string]: number } {
-  const tf: { [term: string]: number } = {};
+function calculateTf(tokens, vocabulary) {
+  const tf = {};
   const totalTokens = tokens.length;
   
   if (totalTokens === 0) return tf;
@@ -207,13 +184,12 @@ function calculateTf(tokens: string[], vocabulary: string[]): { [term: string]: 
   return tf;
 }
 
-function calculateIdf(term: string, tokenizedDocs: string[][]): number {
+function calculateIdf(term, tokenizedDocs) {
   const docsWithTerm = tokenizedDocs.filter(tokens => tokens.includes(term)).length;
   return Math.log(tokenizedDocs.length / Math.max(docsWithTerm, 1));
 }
 
-// Comprehensive stop words list
-function isStopWord(word: string): boolean {
+function isStopWord(word) {
   const stopWords = new Set([
     'the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by',
     'is', 'are', 'was', 'were', 'be', 'been', 'being', 'have', 'has', 'had', 'do', 'does', 'did',
@@ -229,8 +205,7 @@ function isStopWord(word: string): boolean {
   return stopWords.has(word);
 }
 
-// Additional similarity calculation using Jaccard similarity for cross-validation
-export function jaccardSimilarity(text1: string, text2: string): number {
+export function jaccardSimilarity(text1, text2) {
   const tokens1 = new Set(tokenize(text1));
   const tokens2 = new Set(tokenize(text2));
   
@@ -240,8 +215,7 @@ export function jaccardSimilarity(text1: string, text2: string): number {
   return union.size === 0 ? 0 : intersection.size / union.size;
 }
 
-// N-gram similarity for better phrase matching
-export function ngramSimilarity(text1: string, text2: string, n: number = 3): number {
+export function ngramSimilarity(text1, text2, n = 3) {
   const ngrams1 = generateNgrams(text1, n);
   const ngrams2 = generateNgrams(text2, n);
   
@@ -254,9 +228,9 @@ export function ngramSimilarity(text1: string, text2: string, n: number = 3): nu
   return union.size === 0 ? 0 : intersection.size / union.size;
 }
 
-function generateNgrams(text: string, n: number): string[] {
+function generateNgrams(text, n) {
   const words = tokenize(text);
-  const ngrams: string[] = [];
+  const ngrams = [];
   
   for (let i = 0; i <= words.length - n; i++) {
     ngrams.push(words.slice(i, i + n).join(' '));

@@ -1,17 +1,16 @@
 import React, { useState, useCallback } from 'react';
 import { FileText, Upload, AlertTriangle, CheckCircle, XCircle } from 'lucide-react';
-import FileUpload from './components/FileUpload';
-import ComparisonResults from './components/ComparisonResults';
-import { analyzeFiles } from './utils/analysisEngine';
-import { FileData, ComparisonResult } from './types';
+import FileUpload from './components/FileUpload.js';
+import ComparisonResults from './components/ComparisonResults.js';
+import { analyzeFiles } from './utils/analysisEngine.js';
 
 function App() {
-  const [files, setFiles] = useState<FileData[]>([]);
-  const [results, setResults] = useState<ComparisonResult[]>([]);
+  const [files, setFiles] = useState([]);
+  const [results, setResults] = useState([]);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState(null);
 
-  const handleFilesUpload = useCallback((uploadedFiles: FileData[]) => {
+  const handleFilesUpload = useCallback((uploadedFiles) => {
     setFiles(uploadedFiles);
     setResults([]);
     setError(null);
@@ -42,12 +41,10 @@ function App() {
     setResults([]);
     setError(null);
     
-    // Dispatch custom event to clear files in FileUpload component
     window.dispatchEvent(new CustomEvent('clearFiles'));
     
-    // Force clear all file inputs
     setTimeout(() => {
-      const fileInputs = document.querySelectorAll('input[type="file"]') as NodeListOf<HTMLInputElement>;
+      const fileInputs = document.querySelectorAll('input[type="file"]');
       fileInputs.forEach(input => {
         input.value = '';
         input.files = null;
@@ -57,7 +54,6 @@ function App() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
-      {/* Header */}
       <header className="bg-white shadow-sm border-b border-slate-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex items-center justify-between">
@@ -75,7 +71,6 @@ function App() {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Hero Section */}
         <div className="text-center mb-12">
           <div className="inline-flex items-center space-x-2 bg-blue-100 text-blue-800 px-4 py-2 rounded-full text-sm font-medium mb-4">
             <FileText className="w-4 h-4" />
@@ -89,7 +84,6 @@ function App() {
           </p>
         </div>
 
-        {/* Error Display */}
         {error && (
           <div className="mb-8 bg-red-50 border border-red-200 rounded-lg p-4 flex items-start space-x-3">
             <XCircle className="w-5 h-5 text-red-500 mt-0.5 flex-shrink-0" />
@@ -100,7 +94,6 @@ function App() {
           </div>
         )}
 
-        {/* File Upload Section */}
         <div className="grid lg:grid-cols-3 gap-8 mb-8">
           <div className="lg:col-span-2">
             <FileUpload
@@ -110,7 +103,6 @@ function App() {
           </div>
           
           <div className="space-y-4">
-            {/* File Summary */}
             <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-6">
               <h3 className="text-lg font-semibold text-slate-900 mb-4">Upload Summary</h3>
               <div className="space-y-3">
@@ -133,7 +125,6 @@ function App() {
               </div>
             </div>
 
-            {/* Action Buttons */}
             <div className="space-y-3">
               <button
                 onClick={handleAnalyze}
@@ -164,7 +155,6 @@ function App() {
               )}
             </div>
 
-            {/* Tips */}
             <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
               <h4 className="text-sm font-medium text-blue-900 mb-2">Tips</h4>
               <ul className="text-xs text-blue-800 space-y-1">
@@ -177,7 +167,6 @@ function App() {
           </div>
         </div>
 
-        {/* Results Section */}
         {results.length > 0 && (
           <ComparisonResults results={results} />
         )}
