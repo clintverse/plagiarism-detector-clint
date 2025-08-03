@@ -1,7 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import { FileText, Upload, AlertTriangle, CheckCircle, XCircle } from 'lucide-react';
-import FileUpload from './components/FileUpload.js';
-import ComparisonResults from './components/ComparisonResults.js';
+import FileUpload from './components/FileUpload.jsx';
+import ComparisonResults from './components/ComparisonResults.jsx';
 import { analyzeFiles } from './utils/analysisEngine.js';
 
 function App() {

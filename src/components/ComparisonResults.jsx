@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { AlertTriangle, CheckCircle, Download, BarChart3 } from 'lucide-react';
-import SimilarityMeter from './SimilarityMeter.js';
+import SimilarityMeter from './SimilarityMeter.jsx';
 
 const ComparisonResults = ({ results }) => {
   const [sortBy, setSortBy] = useState('similarity');
