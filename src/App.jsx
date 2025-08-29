@@ -42,36 +42,95 @@ function App() {
   };
 
   const calculateSimilarity = (text1, text2) => {
-    const words1 = text1.toLowerCase().split(/\s+/).filter(word => word.length > 3);
-    const words2 = text2.toLowerCase().split(/\s+/).filter(word => word.length > 3);
+    // Clean and normalize text
+    const cleanText = (text) => {
+      return text.toLowerCase()
+        .replace(/[^\w\s]/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+    };
     
+    const clean1 = cleanText(text1);
+    const clean2 = cleanText(text2);
+    
+    // Split into sentences and phrases
+    const sentences1 = clean1.split(/[.!?]+/).filter(s => s.trim().length > 10);
+    const sentences2 = clean2.split(/[.!?]+/).filter(s => s.trim().length > 10);
+    
+    // Word-level comparison
+    const words1 = clean1.split(/\s+/).filter(word => word.length > 3);
+    const words2 = clean2.split(/\s+/).filter(word => word.length > 3);
+    
+    // Calculate word similarity
     const commonWords = words1.filter(word => words2.includes(word));
-    const totalWords = Math.max(words1.length, words2.length);
+    const wordSimilarity = words1.length > 0 ? (commonWords.length / words1.length) * 100 : 0;
     
-    if (totalWords === 0) return 0;
-    return Math.round((commonWords.length / totalWords) * 100);
+    // Calculate phrase similarity (3-word sequences)
+    const getPhrases = (words) => {
+      const phrases = [];
+      for (let i = 0; i < words.length - 2; i++) {
+        phrases.push(words.slice(i, i + 3).join(' '));
+      }
+      return phrases;
+    };
+    
+    const phrases1 = getPhrases(words1);
+    const phrases2 = getPhrases(words2);
+    const commonPhrases = phrases1.filter(phrase => phrases2.includes(phrase));
+    const phraseSimilarity = phrases1.length > 0 ? (commonPhrases.length / phrases1.length) * 100 : 0;
+    
+    // Calculate sentence similarity
+    let sentenceSimilarity = 0;
+    if (sentences1.length > 0 && sentences2.length > 0) {
+      let matchingSentences = 0;
+      sentences1.forEach(sent1 => {
+        sentences2.forEach(sent2 => {
+          const sentWords1 = sent1.split(/\s+/);
+          const sentWords2 = sent2.split(/\s+/);
+          const commonInSent = sentWords1.filter(word => sentWords2.includes(word));
+          if (commonInSent.length / Math.max(sentWords1.length, sentWords2.length) > 0.6) {
+            matchingSentences++;
+          }
+        });
+      });
+      sentenceSimilarity = (matchingSentences / sentences1.length) * 100;
+    }
+    
+    // Weighted final score
+    const finalScore = (wordSimilarity * 0.4) + (phraseSimilarity * 0.4) + (sentenceSimilarity * 0.2);
+    return Math.min(100, Math.round(finalScore));
   };
 
   const generateMatches = (text1, text2) => {
-    const sentences1 = text1.split(/[.!?]+/).filter(s => s.trim().length > 10);
-    const sentences2 = text2.split(/[.!?]+/).filter(s => s.trim().length > 10);
+    const cleanText = (text) => text.toLowerCase().replace(/[^\w\s]/g, ' ').replace(/\s+/g, ' ').trim();
+    
+    const clean1 = cleanText(text1);
+    const clean2 = cleanText(text2);
+    
+    const sentences1 = clean1.split(/[.!?]+/).filter(s => s.trim().length > 15);
+    const sentences2 = clean2.split(/[.!?]+/).filter(s => s.trim().length > 15);
     
     const matches = [];
+    
     sentences1.forEach((sent1, i) => {
       sentences2.forEach((sent2, j) => {
-        const similarity = calculateSimilarity(sent1, sent2);
-        if (similarity > 30) {
+        const words1 = sent1.split(/\s+/);
+        const words2 = sent2.split(/\s+/);
+        const commonWords = words1.filter(word => words2.includes(word) && word.length > 3);
+        const similarity = (commonWords.length / Math.max(words1.length, words2.length)) * 100;
+        
+        if (similarity > 40) {
           matches.push({
             id: `${i}-${j}`,
-            text1: sent1.trim(),
-            text2: sent2.trim(),
-            similarity: similarity
+            text1: text1.split(/[.!?]+/)[i]?.trim() || sent1.trim(),
+            text2: text2.split(/[.!?]+/)[j]?.trim() || sent2.trim(),
+            similarity: Math.round(similarity)
           });
         }
       });
     });
     
-    return matches.slice(0, 5);
+    return matches.sort((a, b) => b.similarity - a.similarity).slice(0, 6);
   };
 
   const clearFiles = () => {
