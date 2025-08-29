@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
-import { Upload, File, X } from 'lucide-react';
+import { Upload, File, X, FileText } from 'lucide-react';
 
-const FileUpload = ({ onUpload }) => {
-  const [files, setFiles] = useState([]);
+const FileUpload = ({ onUpload, files }) => {
   const [dragActive, setDragActive] = useState(false);
 
   const handleFiles = (fileList) => {
@@ -11,7 +10,7 @@ const FileUpload = ({ onUpload }) => {
     for (let i = 0; i < fileList.length; i++) {
       const file = fileList[i];
       
-      if (file.type === 'text/plain' || file.name.endsWith('.txt')) {
+      if (file.type === 'text/plain' || file.name.endsWith('.txt') || file.name.endsWith('.doc') || file.name.endsWith('.docx')) {
         const reader = new FileReader();
         reader.onload = (e) => {
           const fileData = {
@@ -21,11 +20,8 @@ const FileUpload = ({ onUpload }) => {
             size: file.size
           };
           
-          setFiles(prev => {
-            const updated = [...prev, fileData];
-            onUpload(updated);
-            return updated;
-          });
+          const updatedFiles = [...files, fileData];
+          onUpload(updatedFiles);
         };
         reader.readAsText(file);
       }
@@ -46,58 +42,70 @@ const FileUpload = ({ onUpload }) => {
 
   const removeFile = (fileId) => {
     const updated = files.filter(f => f.id !== fileId);
-    setFiles(updated);
     onUpload(updated);
   };
 
   return (
     <div className="space-y-6">
-      <div
-        onDragEnter={(e) => { e.preventDefault(); setDragActive(true); }}
-        onDragLeave={(e) => { e.preventDefault(); setDragActive(false); }}
-        onDragOver={(e) => e.preventDefault()}
-        onDrop={handleDrop}
-        className={`border-2 border-dashed rounded-lg p-8 text-center ${
-          dragActive ? 'border-blue-400 bg-blue-50' : 'border-gray-300'
-        }`}
-      >
-        <input
-          type="file"
-          multiple
-          accept=".txt"
-          onChange={handleFileInput}
-          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-        />
+      <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-6">
+        <h2 className="text-xl font-semibold text-slate-900 mb-4">Upload Documents</h2>
         
-        <Upload className="w-12 h-12 mx-auto text-gray-400 mb-4" />
-        <h3 className="text-lg font-medium text-gray-900 mb-2">
-          Upload Text Files
-        </h3>
-        <p className="text-gray-600">
-          Drag and drop .txt files or click to browse
-        </p>
+        <div
+          onDragEnter={(e) => { e.preventDefault(); setDragActive(true); }}
+          onDragLeave={(e) => { e.preventDefault(); setDragActive(false); }}
+          onDragOver={(e) => e.preventDefault()}
+          onDrop={handleDrop}
+          className={`relative border-2 border-dashed rounded-lg p-8 text-center transition-colors duration-200 ${
+            dragActive ? 'border-blue-400 bg-blue-50' : 'border-slate-300 hover:border-slate-400'
+          }`}
+        >
+          <input
+            type="file"
+            multiple
+            accept=".txt,.doc,.docx"
+            onChange={handleFileInput}
+            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+          />
+          
+          <Upload className="w-12 h-12 mx-auto text-slate-400 mb-4" />
+          <h3 className="text-lg font-medium text-slate-900 mb-2">
+            Upload Text Documents
+          </h3>
+          <p className="text-slate-600 mb-4">
+            Drag and drop files here or click to browse
+          </p>
+          <p className="text-xs text-slate-500">
+            Supports .txt, .doc, .docx files • Maximum 10MB per file
+          </p>
+        </div>
       </div>
 
       {files.length > 0 && (
-        <div className="space-y-3">
-          <h3 className="font-medium text-gray-900">Uploaded Files</h3>
-          {files.map((file) => (
-            <div key={file.id} className="flex items-center justify-between p-3 bg-white rounded-lg border">
-              <div className="flex items-center space-x-3">
-                <File className="w-5 h-5 text-blue-600" />
-                <div>
-                  <p className="text-sm font-medium">{file.name}</p>
-                  <p className="text-xs text-gray-500">{(file.size / 1024).toFixed(1)} KB</p>
+        <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-6">
+          <h3 className="text-lg font-semibold text-slate-900 mb-4">
+            Uploaded Files ({files.length})
+          </h3>
+          <div className="space-y-3">
+            {files.map((file) => (
+              <div key={file.id} className="flex items-center justify-between p-4 bg-slate-50 rounded-lg border border-slate-200">
+                <div className="flex items-center space-x-3">
+                  <FileText className="w-5 h-5 text-blue-600 flex-shrink-0" />
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-slate-900">{file.name}</p>
+                    <p className="text-xs text-slate-500">
+                      {(file.size / 1024).toFixed(1)} KB • {file.content.split(' ').length} words
+                    </p>
+                  </div>
                 </div>
+                <button
+                  onClick={() => removeFile(file.id)}
+                  className="text-slate-400 hover:text-red-500 transition-colors duration-200 p-1"
+                >
+                  <X className="w-4 h-4" />
+                </button>
               </div>
-              <button
-                onClick={() => removeFile(file.id)}
-                className="text-gray-400 hover:text-red-500"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       )}
     </div>
